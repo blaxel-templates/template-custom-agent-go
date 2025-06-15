@@ -1,0 +1,12 @@
+type = "agent"
+
+[entrypoint]
+prod = "./template-custom-agent-go"
+dev = "air"
+
+[[triggers]]
+id = "http"
+type = "http"
+[triggers.configuration]
+path = "/test-agent-golang"
+authenticationType = "public"
