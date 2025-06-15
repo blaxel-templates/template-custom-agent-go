@@ -44,7 +44,8 @@ Template
 - `GET /tools/servers/:server/tools` - List tools from specific server
 
 ### Agent Execution
-- `POST /agent` - Run intelligent agent with tool calling
+- `POST /` - Stream agent response as plain text (streaming)
+- `POST /agent` - Run intelligent agent with tool calling (JSON response)
 - `POST /agent/run` - Alternative agent endpoint
 
 ### Chat Completions
@@ -53,6 +54,10 @@ Template
 
 ### Documentation
 - `GET /` - API documentation and endpoint overview
+
+### Root Endpoints
+- `GET /` - API documentation and endpoint overview
+- `POST /` - Stream agent response as plain text
 
 ## 🚀 Quick Start
 
@@ -79,7 +84,19 @@ bl deploy
 
 ## 📖 Usage Examples
 
-### Agent with Tool Calling
+### Streaming Agent (Text Response)
+```bash
+curl -X POST http://localhost:1338/ \
+  -H "Content-Type: application/json" \
+  -d '{
+    "inputs": "What is the weather in San Francisco?",
+    "max_iterations": 5,
+    "model": "gpt-4o-mini",
+    "system_prompt": "You are a helpful weather assistant."
+  }'
+```
+
+### Agent with Tool Calling (JSON Response)
 ```bash
 curl -X POST http://localhost:1338/agent \
   -H "Content-Type: application/json" \
