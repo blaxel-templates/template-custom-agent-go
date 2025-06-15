@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"template-custom-agent-go/pkg/agent"
+	"template-custom-agent-go/pkg/logger"
 
 	"github.com/gin-gonic/gin"
 )
@@ -40,7 +41,7 @@ func (r *Router) streamAgent(c *gin.Context) {
 	// Set defaults
 	model := request.Model
 	if model == "" {
-		model = "gpt-4o-mini"
+		model = "sandbox-openai"
 	}
 
 	systemPrompt := request.SystemPrompt
@@ -77,7 +78,7 @@ func (r *Router) streamAgent(c *gin.Context) {
 	// Set both tools and tool manager on the agent
 	demoAgent.SetTools(tools)
 	demoAgent.SetToolManager(toolManager)
-	fmt.Printf("Streaming agent configured with %s tools\n", strings.Join(toolNames, ", "))
+	logger.Debugf("Streaming agent configured with %s tools", strings.Join(toolNames, ", "))
 
 	// Set headers for streaming
 	c.Header("Content-Type", "text/plain; charset=utf-8")
@@ -126,7 +127,7 @@ func (r *Router) runAgent(c *gin.Context) {
 	// Set defaults
 	model := request.Model
 	if model == "" {
-		model = "gpt-4o-mini"
+		model = "sandbox-openai"
 	}
 
 	systemPrompt := request.SystemPrompt
@@ -163,7 +164,7 @@ func (r *Router) runAgent(c *gin.Context) {
 	// Set both tools and tool manager on the agent
 	demoAgent.SetTools(tools)
 	demoAgent.SetToolManager(toolManager)
-	fmt.Printf("Agent configured with %s tools\n", strings.Join(toolNames, ", "))
+	logger.Debugf("Agent configured with %s tools", strings.Join(toolNames, ", "))
 
 	// Run the agent
 	response, err := demoAgent.Run(c, request.Inputs)

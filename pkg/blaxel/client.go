@@ -5,9 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"os"
+
+	"template-custom-agent-go/pkg/logger"
 
 	"github.com/blaxel-ai/toolkit/sdk"
 )
@@ -134,8 +135,8 @@ func NewClient() *Client {
 		credentials = sdk.LoadCredentials(workspace)
 	}
 	if !credentials.IsValid() && workspace != "" {
-		fmt.Printf("Invalid credentials for workspace %s\n", workspace)
-		fmt.Printf("Please run `bl login %s` to fix it credentials.\n", workspace)
+		logger.Warningf("Invalid credentials for workspace %s", workspace)
+		logger.Warningf("Please run `bl login %s` to fix it credentials.", workspace)
 	}
 	c, err := sdk.NewClientWithCredentials(
 		sdk.RunClientWithCredentials{
@@ -146,24 +147,24 @@ func NewClient() *Client {
 		},
 	)
 	if err != nil {
-		log.Fatalf("Error creating Blaxel client: %v\n", err)
+		logger.Fatalf("Error creating Blaxel client: %v", err)
 	}
 	authProvider := sdk.GetAuthProvider(credentials, workspace, apiUrl)
 
 	headers, err := authProvider.GetHeaders()
 	if err != nil {
-		log.Fatalf("failed to get headers: %v", err)
+		logger.Fatalf("failed to get headers: %v", err)
 	}
 
 	// Initialize MCP Manager
 	mcpManager := NewMCPManager(headers)
 
-	// Configure MCP servers from environment or use default blaxel-search
-	serverNames := []string{"blaxel-search", ""}
+	// Configure MCP servers connected to
+	serverNames := []string{"blaxel-search"}
 	mcpServers := getMCPServersConfig(runUrl, workspace, serverNames)
 	for _, serverConfig := range mcpServers {
 		if err := mcpManager.AddServer(serverConfig); err != nil {
-			log.Printf("Warning: Failed to add MCP server %s: %v", serverConfig.Name, err)
+			logger.Warningf("Failed to add MCP server %s: %v", serverConfig.Name, err)
 		}
 	}
 

@@ -1,9 +1,9 @@
 package middleware
 
 import (
-	"log"
 	"net/http"
 	"runtime/debug"
+	"template-custom-agent-go/pkg/logger"
 	"template-custom-agent-go/pkg/models"
 	"time"
 
@@ -14,7 +14,7 @@ import (
 func CustomRecoveryMiddleware() gin.HandlerFunc {
 	return gin.CustomRecovery(func(c *gin.Context, recovered interface{}) {
 		// Log the panic with stack trace
-		log.Printf("PANIC RECOVERED: %v\n%s", recovered, debug.Stack())
+		logger.Errorf("PANIC RECOVERED: %v\n%s", recovered, debug.Stack())
 
 		// Create standardized error response
 		errorResp := models.ErrorResponse{

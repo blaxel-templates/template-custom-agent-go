@@ -1,14 +1,17 @@
 package main
 
 import (
-	"log"
 	"os"
 
 	"template-custom-agent-go/pkg/blaxel"
+	"template-custom-agent-go/pkg/logger"
 	"template-custom-agent-go/pkg/router"
+
+	"github.com/gin-gonic/gin"
 )
 
 func main() {
+	gin.SetMode(gin.ReleaseMode)
 	// Initialize Blaxel client
 	bl := blaxel.NewClient()
 
@@ -25,8 +28,8 @@ func main() {
 	}
 
 	// Start server on the specified port
-	log.Printf("Starting server on port %s", port)
+	logger.Infof("Starting server on port %s", port)
 	if err := engine.Run(":" + port); err != nil {
-		log.Fatalf("Failed to start server: %v", err)
+		logger.Fatalf("Failed to start server: %v", err)
 	}
 }

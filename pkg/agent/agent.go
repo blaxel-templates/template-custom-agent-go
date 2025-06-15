@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"template-custom-agent-go/pkg/blaxel"
+	"template-custom-agent-go/pkg/logger"
 )
 
 // Agent represents an AI agent with configurable model and tools
@@ -97,9 +98,9 @@ func (a *Agent) Run(ctx context.Context, userInput string) (*blaxel.ChatCompleti
 			Tools:    a.tools,
 		}
 
-		fmt.Printf("Iteration %d: Sending request with %d tools\n", iteration, len(a.tools))
+		logger.Debugf("Iteration %d: Sending request with %d tools", iteration, len(a.tools))
 		if len(a.tools) > 0 {
-			fmt.Printf("Tools being sent: %v\n", a.tools[0].Function.Name)
+			logger.Debugf("Tools being sent: %v", a.tools[0].Function.Name)
 		}
 
 		resp, err := a.blaxelClient.CreateChatCompletion(req)
@@ -112,7 +113,7 @@ func (a *Agent) Run(ctx context.Context, userInput string) (*blaxel.ChatCompleti
 		}
 
 		assistantMessage := resp.Choices[0].Message
-		fmt.Printf("Iteration %d: Assistant response has %d tool calls\n", iteration, len(assistantMessage.ToolCalls))
+		logger.Debugf("Iteration %d: Assistant response has %d tool calls", iteration, len(assistantMessage.ToolCalls))
 		messages = append(messages, assistantMessage)
 
 		// Check if AI wants to use tools

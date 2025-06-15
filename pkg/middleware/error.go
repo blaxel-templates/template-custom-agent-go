@@ -1,8 +1,8 @@
 package middleware
 
 import (
-	"log"
 	"net/http"
+	"template-custom-agent-go/pkg/logger"
 	"template-custom-agent-go/pkg/models"
 	"time"
 
@@ -21,7 +21,7 @@ func ErrorHandlerMiddleware() gin.HandlerFunc {
 			err := c.Errors.Last()
 
 			// Log the error
-			log.Printf("Request error: %v, Path: %s, Method: %s", err.Error(), c.Request.URL.Path, c.Request.Method)
+			logger.Errorf("Request error: %v, Path: %s, Method: %s", err.Error(), c.Request.URL.Path, c.Request.Method)
 
 			// Determine status code if not already set
 			statusCode := c.Writer.Status()

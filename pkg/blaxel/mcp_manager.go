@@ -4,8 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"os"
+	"template-custom-agent-go/pkg/logger"
 
 	mcp_golang "github.com/agentuity/mcp-golang/v2"
 	"github.com/blaxel-ai/toolkit/sdk/mcp"
@@ -45,7 +45,7 @@ func (m *MCPManager) AddServer(config MCPServerConfig) error {
 	}
 
 	m.servers[config.Name] = client
-	log.Printf("Added MCP server: %s at %s", config.Name, config.URL)
+	logger.Debugf("Added MCP server: %s at %s", config.Name, config.URL)
 	return nil
 }
 
@@ -56,7 +56,7 @@ func (m *MCPManager) ListAllTools(ctx context.Context) ([]ToolWithServer, error)
 	for serverName, client := range m.servers {
 		tools, err := client.ListTools(ctx)
 		if err != nil {
-			log.Printf("Warning: Failed to get tools from server %s: %v", serverName, err)
+			logger.Warningf("Failed to get tools from server %s: %v", serverName, err)
 			continue
 		}
 
@@ -100,7 +100,7 @@ func (m *MCPManager) Close() error {
 	var lastErr error
 	for name, client := range m.servers {
 		if err := client.Close(); err != nil {
-			log.Printf("Error closing MCP server %s: %v", name, err)
+			logger.Errorf("Error closing MCP server %s: %v", name, err)
 			lastErr = err
 		}
 	}
