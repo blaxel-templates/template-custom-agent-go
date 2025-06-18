@@ -91,7 +91,7 @@ curl -X POST http://localhost:1338/ \
   -d '{
     "inputs": "What is the weather in San Francisco?",
     "max_iterations": 5,
-    "model": "gpt-4o-mini",
+    "model": "sandbox-openai",
     "system_prompt": "You are a helpful weather assistant."
   }'
 ```
@@ -103,7 +103,7 @@ curl -X POST http://localhost:1338/agent \
   -d '{
     "inputs": "What is the weather in San Francisco?",
     "max_iterations": 5,
-    "model": "gpt-4o-mini",
+    "model": "sandbox-openai",
     "system_prompt": "You are a helpful weather assistant."
   }'
 ```

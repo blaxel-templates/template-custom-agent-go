@@ -52,6 +52,9 @@ func (r *Router) rootEndpoint(c *gin.Context) {
 		"message": "Welcome to the Template Custom Agent Go",
 		"version": "1.0.0",
 		"endpoints": gin.H{
+			"/": []string{
+				"POST / - Stream agent execution",
+			},
 			"health": []string{
 				"GET /health - Basic health check",
 				"GET /health/ready - Readiness probe",
