@@ -22,7 +22,7 @@ func main() {
 	engine := r.SetupRoutes()
 
 	// Get port from environment variable or use default
-	port := os.Getenv("BL_SERVER_PORT")
+	port := os.Getenv("PORT")
 	if port == "" {
 		port = "1338"
 	}
