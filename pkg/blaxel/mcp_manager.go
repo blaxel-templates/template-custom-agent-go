@@ -7,8 +7,8 @@ import (
 	"os"
 	"template-custom-agent-go/pkg/logger"
 
-	mcp_golang "github.com/agentuity/mcp-golang/v2"
-	"github.com/blaxel-ai/toolkit/sdk/mcp"
+	blaxelMCP "github.com/blaxel-ai/toolkit/sdk/mcp"
+	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
 // MCPServerConfig represents configuration for a single MCP server
@@ -19,27 +19,27 @@ type MCPServerConfig struct {
 
 // MCPManager manages multiple MCP servers
 type MCPManager struct {
-	servers map[string]*mcp.MCPClient
+	servers map[string]*blaxelMCP.MCPClient
 	headers map[string]string
 }
 
 // ToolWithServer represents a tool with its associated server
 type ToolWithServer struct {
-	Tool       mcp_golang.ToolRetType
+	Tool       *mcp.Tool
 	ServerName string
 }
 
 // NewMCPManager creates a new MCP manager
 func NewMCPManager(headers map[string]string) *MCPManager {
 	return &MCPManager{
-		servers: make(map[string]*mcp.MCPClient),
+		servers: make(map[string]*blaxelMCP.MCPClient),
 		headers: headers,
 	}
 }
 
 // AddServer adds a new MCP server to the manager
 func (m *MCPManager) AddServer(config MCPServerConfig) error {
-	client, err := mcp.NewMCPClient(config.URL, m.headers)
+	client, err := blaxelMCP.NewMCPClient(config.URL, m.headers)
 	if err != nil {
 		return fmt.Errorf("failed to create MCP client for %s: %w", config.Name, err)
 	}
@@ -72,7 +72,7 @@ func (m *MCPManager) ListAllTools(ctx context.Context) ([]ToolWithServer, error)
 }
 
 // CallTool routes a tool call to the appropriate MCP server
-func (m *MCPManager) CallTool(ctx context.Context, serverName, toolName string, params interface{}) (*mcp_golang.ToolResponse, error) {
+func (m *MCPManager) CallTool(ctx context.Context, serverName, toolName string, params interface{}) (*mcp.CallToolResult, error) {
 	client, exists := m.servers[serverName]
 	if !exists {
 		return nil, fmt.Errorf("MCP server %s not found", serverName)

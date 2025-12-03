@@ -34,10 +34,7 @@ func (tm *ToolManager) ConvertMCPToolsToOpenAI(mcpToolsWithServer []blaxel.ToolW
 		tm.toolServerMap[mcpTool.Name] = serverName
 
 		// Handle optional description
-		description := ""
-		if mcpTool.Description != nil {
-			description = *mcpTool.Description
-		}
+		description := mcpTool.Description
 
 		// Convert to OpenAI format
 		openAITool := blaxel.Tool{
