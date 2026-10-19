@@ -1,28 +1,30 @@
 package blaxel
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
+	"strings"
 
 	"template-custom-agent-go/pkg/logger"
 
-	"github.com/blaxel-ai/toolkit/sdk"
+	blaxelsdk "github.com/blaxel-ai/sdk-go"
 )
 
 // Client represents a client for making requests to AI models
 type Client struct {
-	BlaxelClient *sdk.ClientWithResponses
-	Workspace    string
-	RunUrl       string
-	ApiUrl       string
-	Model        string
-	Debug        bool
-	AuthProvider sdk.AuthProvider
-	McpManager   *MCPManager
+	HTTPClient  *http.Client
+	Workspace   string
+	RunUrl      string
+	ApiUrl      string
+	Model       string
+	Debug       bool
+	Credentials blaxelsdk.Credentials
+	McpManager  *MCPManager
 }
 
 // ChatCompletionRequest represents the request body for chat completions
@@ -106,18 +108,12 @@ type ErrorResponse struct {
 
 // NewClient creates a new Blaxel client
 func NewClient() *Client {
-	workspace := os.Getenv("BL_WORKSPACE")
-	if workspace == "" {
-		workspace = sdk.CurrentContext().Workspace
-	}
-	runUrl := os.Getenv("BL_RUN_URL")
-	if runUrl == "" {
-		runUrl = "https://run.blaxel.ai"
-	}
-	apiUrl := os.Getenv("BL_API_URL")
-	if apiUrl == "" {
-		apiUrl = "https://api.blaxel.ai/v0"
-	}
+	// BL_WORKSPACE first, then the current `bl login` context.
+	workspace := blaxelsdk.GetDefaultWorkspace()
+	// Picks the environment (BL_ENV or the workspace config) and applies BL_API_URL / BL_RUN_URL overrides.
+	blaxelsdk.InitializeEnvironment(workspace)
+	runUrl := blaxelsdk.GetRunURL()
+	apiUrl := blaxelsdk.GetBaseURL()
 	model := os.Getenv("BL_MODEL")
 	if model == "" {
 		model = "sandbox-openai"
@@ -126,32 +122,13 @@ func NewClient() *Client {
 	if debug == "" {
 		debug = "false"
 	}
-	var credentials sdk.Credentials
-	if os.Getenv("BL_CLIENT_CREDENTIALS") != "" {
-		credentials = sdk.Credentials{
-			ClientCredentials: os.Getenv("BL_CLIENT_CREDENTIALS"),
-		}
-	} else {
-		credentials = sdk.LoadCredentials(workspace)
-	}
+	credentials := loadCredentials(workspace)
 	if !credentials.IsValid() && workspace != "" {
 		logger.Warningf("Invalid credentials for workspace %s", workspace)
 		logger.Warningf("Please run `bl login %s` to fix it credentials.", workspace)
 	}
-	c, err := sdk.NewClientWithCredentials(
-		sdk.RunClientWithCredentials{
-			ApiURL:      apiUrl,
-			RunURL:      runUrl,
-			Credentials: credentials,
-			Workspace:   workspace,
-		},
-	)
-	if err != nil {
-		logger.Fatalf("Error creating Blaxel client: %v", err)
-	}
-	authProvider := sdk.GetAuthProvider(credentials, workspace, apiUrl)
 
-	headers, err := authProvider.GetHeaders()
+	headers, err := credentials.AuthHeaders(context.Background(), workspace)
 	if err != nil {
 		logger.Fatalf("failed to get headers: %v", err)
 	}
@@ -169,38 +146,61 @@ func NewClient() *Client {
 	}
 
 	return &Client{
-		BlaxelClient: c,
-		Workspace:    workspace,
-		Model:        model,
-		Debug:        debug == "true",
-		AuthProvider: authProvider,
-		RunUrl:       runUrl,
-		ApiUrl:       apiUrl,
-		McpManager:   mcpManager,
+		HTTPClient:  &http.Client{},
+		Workspace:   workspace,
+		Model:       model,
+		Debug:       debug == "true",
+		Credentials: credentials,
+		RunUrl:      runUrl,
+		ApiUrl:      apiUrl,
+		McpManager:  mcpManager,
 	}
+}
+
+// loadCredentials reads BL_API_KEY, then BL_CLIENT_CREDENTIALS, then the `bl login` config for the workspace.
+func loadCredentials(workspace string) blaxelsdk.Credentials {
+	if apiKey := os.Getenv("BL_API_KEY"); apiKey != "" {
+		return blaxelsdk.Credentials{APIKey: apiKey}
+	}
+	if clientCredentials := os.Getenv("BL_CLIENT_CREDENTIALS"); clientCredentials != "" {
+		return blaxelsdk.Credentials{ClientCredentials: clientCredentials}
+	}
+	credentials, err := blaxelsdk.LoadCredentials(workspace)
+	if err != nil {
+		logger.Warningf("Could not read Blaxel credentials: %v", err)
+	}
+	return credentials
 }
 
 // CreateChatCompletion sends a chat completion request
 func (c *Client) CreateChatCompletion(req ChatCompletionRequest) (*ChatCompletionResponse, error) {
+	ctx := context.Background()
 
 	jsonData, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal request: %w", err)
 	}
 
-	resp, err := c.BlaxelClient.Run(
-		context.Background(),
-		c.Workspace,
-		"model",
-		c.Model,
-		"POST",
-		"/v1/chat/completions",
-		map[string]string{},
-		[]string{},
-		string(jsonData),
-		c.Debug,
-		false,
-	)
+	// Fetch headers per request so expiring tokens get refreshed.
+	headers, err := c.Credentials.AuthHeaders(ctx, c.Workspace)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get auth headers: %w", err)
+	}
+
+	url := fmt.Sprintf("%s/%s/models/%s/v1/chat/completions", strings.TrimRight(c.RunUrl, "/"), c.Workspace, c.Model)
+	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(jsonData))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create chat completion request: %w", err)
+	}
+	httpReq.Header.Set("Content-Type", "application/json")
+	for key, value := range headers {
+		httpReq.Header.Set(key, value)
+	}
+	if c.Debug {
+		logger.Debugf("POST %s", url)
+	}
+
+	resp, err := c.HTTPClient.Do(httpReq)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create chat completion: %w", err)
 	}
