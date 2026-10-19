@@ -147,7 +147,7 @@ func (a *Agent) Run(ctx context.Context, userInput string) (*blaxel.ChatCompleti
 // executeToolCall executes a single tool call and returns the result
 func (a *Agent) executeToolCall(ctx context.Context, toolCall blaxel.ToolCall) ([]byte, error) {
 	// Parse parameters
-	var params interface{}
+	var params map[string]interface{}
 	if toolCall.Function.Arguments != "" {
 		if err := json.Unmarshal([]byte(toolCall.Function.Arguments), &params); err != nil {
 			return nil, fmt.Errorf("failed to parse tool arguments: %w", err)

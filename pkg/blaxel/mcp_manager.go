@@ -7,7 +7,7 @@ import (
 	"os"
 	"template-custom-agent-go/pkg/logger"
 
-	blaxelMCP "github.com/blaxel-ai/toolkit/sdk/mcp"
+	blaxelMCP "github.com/blaxel-ai/sdk-go/lib/mcp"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
@@ -72,7 +72,7 @@ func (m *MCPManager) ListAllTools(ctx context.Context) ([]ToolWithServer, error)
 }
 
 // CallTool routes a tool call to the appropriate MCP server
-func (m *MCPManager) CallTool(ctx context.Context, serverName, toolName string, params interface{}) (*mcp.CallToolResult, error) {
+func (m *MCPManager) CallTool(ctx context.Context, serverName, toolName string, params map[string]interface{}) (*mcp.CallToolResult, error) {
 	client, exists := m.servers[serverName]
 	if !exists {
 		return nil, fmt.Errorf("MCP server %s not found", serverName)
