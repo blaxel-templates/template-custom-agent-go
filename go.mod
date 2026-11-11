@@ -3,7 +3,7 @@ module template-custom-agent-go
 go 1.25.0
 
 require (
-	github.com/blaxel-ai/sdk-go v0.29.1
+	github.com/blaxel-ai/sdk-go v0.31.0
 	github.com/gin-gonic/gin v1.10.1
 	github.com/modelcontextprotocol/go-sdk v1.4.1
 	go.opentelemetry.io/otel/trace v1.41.0
